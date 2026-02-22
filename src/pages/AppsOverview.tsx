@@ -9,11 +9,7 @@ import { DatePickerWithRange } from "@/components/ui/date-range-picker"
 export default function AppsOverview() {
     const { groups, getAppStats, dateRange, setDateRange } = useIncidents()
 
-    // Aggregate data by Application
-    // Force full static registry of critical services (always visible)
-    // Aggregate data by Application
-    // Force full static registry of critical services (always visible)
-    const allApps = ['Brains', 'Discovery'];
+    const allApps = Array.from(new Set(groups.map(g => g.appId))).filter(Boolean);
 
     // Calculate Global Stats (Filtered by Date Range if active, otherwise 24h default logic?)
     // Actually, if Date Range is active, "24h" should probably become "Selected Period" or just respect the filter.

@@ -18,8 +18,11 @@ interface FilterBarProps {
     sortStrategy: import('../../types/incident').SortStrategy;
     onSortChange: (s: import('../../types/incident').SortStrategy) => void;
 }
+import { useIncidents } from '@/hooks/useIncidents';
 
 export function FilterBar({ onSearchChange, onServiceChange, onViewChange, currentView, dateRange, setDateRange, density, onDensityChange, sortStrategy, onSortChange }: FilterBarProps) {
+    const { groups } = useIncidents();
+    const apps = Array.from(new Set(groups.map(g => g.appId))).filter(Boolean);
 
 
     return (
@@ -103,10 +106,9 @@ export function FilterBar({ onSearchChange, onServiceChange, onViewChange, curre
                         </SelectTrigger>
                         <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200">
                             <SelectItem value="all">Tous les services</SelectItem>
-                            <SelectItem value="kpmg-brains">KPMG BrAIns</SelectItem>
-                            <SelectItem value="kpmg-discovery">KPMG Discovery</SelectItem>
-                            <SelectItem value="kpmg-data-lake">Data Lake</SelectItem>
-                            <SelectItem value="auth-service">Auth Gateway</SelectItem>
+                            {apps.map(app => (
+                                <SelectItem key={app} value={app}>{app}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>

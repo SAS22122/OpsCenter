@@ -232,40 +232,43 @@ export const IncidentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const getAnalyticsData = useCallback(() => {
         // If we are in demo mode (have history), use it to generate analytics data
         // Otherwise fallback to simulation engine
-        if (groups.length > 20) {
-            // Aggregate from real groups
-            const dailyData: Record<string, { errors: number, deployments: number, traffic: number }> = {};
+        // Aggregate from real groups
+        const dailyData: Record<string, { errors: number, deployments: number, traffic: number }> = {};
 
-            // Initialize last 30 days
-            for (let i = 0; i < 30; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const key = d.toISOString().split('T')[0];
-                // Enforce weekly deployments rule for visualization
-                dailyData[key] = {
-                    errors: 0,
-                    deployments: (i % 7 === 0) ? 1 : 0,
-                    traffic: Math.floor(Math.random() * 3000) + 2000 // Simulated Traffic
-                };
-            }
+        // Initialize last 30 days
+        for (let i = 0; i < 30; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const key = d.toISOString().split('T')[0];
+            dailyData[key] = {
+                errors: 0,
+                deployments: 0,
+                traffic: 0 // Will derive from actual events
+            };
+        }
 
-            groups.forEach(g => {
-                const key = g.firstSeen.split('T')[0];
-                if (dailyData[key]) {
-                    dailyData[key].errors += g.occurrenceCount > 100 ? Math.ceil(g.occurrenceCount / 10) : 1;
-                    if (g.status === 'DEPLOYED' || g.status === 'VERIFIED_FIXED') {
-                        dailyData[key].deployments += 1;
+        groups.forEach(g => {
+            const key = g.firstSeen.split('T')[0];
+            if (dailyData[key]) {
+                dailyData[key].errors += g.occurrenceCount || 1;
+                // Derive traffic from occurrences
+                dailyData[key].traffic += g.occurrenceCount * 12; // Example derivation
+
+                if (g.status === 'DEPLOYED' || g.status === 'VERIFIED_FIXED') {
+                    const depKey = g.deployedAt ? g.deployedAt.split('T')[0] : key;
+                    if (dailyData[depKey]) {
+                        dailyData[depKey].deployments += 1;
                     }
                 }
-            });
+            }
+        });
 
-            return Object.entries(dailyData).map(([date, stats]) => ({
-                date,
-                errors: stats.errors,
-                deployments: stats.deployments, // Removed random noise
-                traffic: stats.traffic
-            })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        }
+        return Object.entries(dailyData).map(([date, stats]) => ({
+            date,
+            errors: stats.errors,
+            deployments: stats.deployments,
+            traffic: stats.traffic
+        })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         return [];
     }, [groups]);

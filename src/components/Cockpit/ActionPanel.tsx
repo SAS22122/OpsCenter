@@ -162,7 +162,7 @@ export function ActionPanel({ group, onAction }: ActionPanelProps) {
                     <div className="flex items-center gap-6 text-xs text-slate-500 pl-11">
                         <div className="flex items-center gap-1">
                             <Monitor className="h-3 w-3" />
-                            <span>Affecté : server-prod-eu-01, server-prod-eu-04</span>
+                            <span>Affecté : {group.aiLocation || group.env || 'Non spécifié'}</span>
                         </div>
                     </div>
                 </div>
