@@ -38,7 +38,8 @@ export function SettingsPage() {
 
     const fetchSources = async () => {
         try {
-            const res = await fetch('http://localhost:3001/config/sources');
+            const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
+            const res = await fetch(`${proxyUrl}/config/sources`);
             if (res.ok) {
                 const data = await res.json();
                 setSources(data);
@@ -54,7 +55,8 @@ export function SettingsPage() {
     const handleDelete = async (id: string) => {
         if (!confirm("Supprimer cette connexion ?")) return;
         try {
-            await fetch(`http://localhost:3001/config/sources/${id}`, { method: 'DELETE' });
+            const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
+            await fetch(`${proxyUrl}/config/sources/${id}`, { method: 'DELETE' });
             toast.success("Supprimé");
             fetchSources();
         } catch (e) {
@@ -66,7 +68,8 @@ export function SettingsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://localhost:3001/config/sources', {
+            const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
+            const res = await fetch(`${proxyUrl}/config/sources`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
