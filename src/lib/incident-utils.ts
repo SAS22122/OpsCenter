@@ -17,38 +17,7 @@ export function getRunbookUrl(errorCodeOrMessage: string): string | undefined {
     return undefined;
 }
 
-// 2. Smart Grouping Logic (Simulated AI)
-export function findExistingGroup(newLog: ErrorLog, currentGroups: ErrorGroup[]): ErrorGroup | undefined {
-    // Strategy: Match by Service Name AND (Error Code OR similar message)
-    const matches = currentGroups.filter(group => {
-        if (group.appId !== newLog.application) return false;
-
-        // Exact match on title/error type
-        if (group.title === newLog.message) return true;
-
-        // "Fuzzy" match for similar errors (e.g., timeouts from same IP)
-        if (newLog.message.includes('Timeout') && group.title.includes('Timeout')) return true;
-
-        return false;
-    });
-
-    if (matches.length === 0) return undefined;
-
-    if (matches.length === 0) return undefined;
-
-    // 1. SINKHOLE: Use IGNORED groups first (swallow duplicates)
-    const ignoredMatch = matches.find(g => g.status === 'IGNORED');
-    if (ignoredMatch) return ignoredMatch;
-
-    // 2. ACTIVE: Open/Ack/Regression
-    const activeMatch = matches.find(g => !['FIXED', 'DEPLOYED', 'VERIFIED_FIXED', 'ARCHIVED', 'IGNORED'].includes(g.status));
-
-    // If we have an active match, return it
-    if (activeMatch) return activeMatch;
-
-    // 3. Otherwise return the most recent match (likely V1, regarding as Resolved)
-    return matches[0];
-}
+// 2. [REMOVED] Smart Grouping Logic (Now handled by Backend IngestService)
 
 // 3. PDF Post-Mortem Generation
 interface JsPDFWithAutoTable extends jsPDF {
