@@ -25,7 +25,11 @@ export class ConfigService {
         try {
             if (!fs.existsSync(this.configPath)) return [];
             const data = fs.readFileSync(this.configPath, 'utf8');
-            return JSON.parse(data);
+            const parsed = JSON.parse(data);
+            return parsed.map((source: any) => ({
+                ...source,
+                id: source.id || uuidv4()
+            }));
         } catch (error) {
             this.logger.error('Failed to read sources.json', error);
             return [];
@@ -71,6 +75,16 @@ export class ConfigService {
         const updated = sources.map(s => ({
             ...s,
             lastCheck: new Date(0).toISOString()
+        }));
+        this.writeSources(updated);
+    }
+
+    updateAllSyncDates(): void {
+        const sources = this.readSources();
+        const now = new Date().toISOString();
+        const updated = sources.map(s => ({
+            ...s,
+            lastCheck: now
         }));
         this.writeSources(updated);
     }

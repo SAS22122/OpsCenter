@@ -13,5 +13,6 @@ import { AiModule } from '../ai/ai.module';
     ],
     controllers: [IngestController],
     providers: [IngestService],
+    exports: [IngestService]
 })
 export class IngestModule { }
