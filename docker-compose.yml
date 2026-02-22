@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # 💾 Operational Database (PostgreSQL + pgvector support planned)
+  postgres:
+    image: postgres:16-alpine
+    container_name: incident-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: incident_tracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d incident_tracker" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 📨 Message Broker (BullMQ)
+  redis:
+    image: redis:7-alpine
+    container_name: incident-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+
+  # 📊 DB Admin UI (Optional but helpful)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: incident-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

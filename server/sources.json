@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1770300105758",
+    "name": "KPMG INT",
+    "env": "prod",
+    "type": "sqlserver",
+    "host": "gnd-kpmg-data.francecentral.cloudapp.azure.com",
+    "database": "GeneDoc_KPMG_RiskManagement_Integration",
+    "table": "dbo.NLogs",
+    "user": null,
+    "password": null,
+    "lastCheck": "2026-02-02T18:11:53.307Z"
+  },
+  {
+    "name": "KPMG Prod",
+    "env": "dev",
+    "host": "gnd-kpmg-data.francecentral.cloudapp.azure.com",
+    "database": "Genedoc_KPMG_RiskManagement",
+    "table": "dbo.NLogs",
+    "lastCheck": "2026-02-15T20:01:30.870Z"
+  }
+]
