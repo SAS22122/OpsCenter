@@ -25,6 +25,6 @@ import { AuthModule } from './auth/auth.module';
     IngestModule,
     UsersModule,
     AuthModule,
-  ]
+  ],
 })
-export class AppModule { }
+export class AppModule {}

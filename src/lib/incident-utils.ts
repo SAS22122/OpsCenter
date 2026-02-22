@@ -1,4 +1,4 @@
-import { ErrorLog, ErrorGroup } from '@/types/incident';
+import { ErrorGroup } from '@/types/incident';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 

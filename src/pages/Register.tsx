@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/stores/AuthContext';
+import { useAuth, User } from '@/stores/AuthContext';
 import { ApiClient } from '@/lib/api';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -30,10 +30,11 @@ export default function Register() {
 
             // 2. Auto-login immédiat après inscription
             const data = await ApiClient.login({ email, password });
-            login(data.access_token, data.user);
+            login(data.access_token, data.user as unknown as User);
             navigate('/');
-        } catch (err: any) {
-            toast.error(err.message || "Erreur lors de l'inscription");
+        } catch (err: unknown) {
+            const error = err as Error;
+            toast.error(error.message || "Erreur lors de l'inscription");
         } finally {
             setLoading(false);
         }

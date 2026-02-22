@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@/stores/AuthContext';
+import { useAuth, User } from '@/stores/AuthContext';
 import { ApiClient } from '@/lib/api';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,11 +24,12 @@ export default function Login() {
         setLoading(true);
         try {
             const data = await ApiClient.login({ email, password });
-            login(data.access_token, data.user);
+            login(data.access_token, data.user as unknown as User);
             toast.success("Connexion réussie");
             navigate('/');
-        } catch (err: any) {
-            toast.error(err.message || "Email ou mot de passe incorrect");
+        } catch (err: unknown) {
+            const error = err as Error;
+            toast.error(error.message || "Email ou mot de passe incorrect");
         } finally {
             setLoading(false);
         }
