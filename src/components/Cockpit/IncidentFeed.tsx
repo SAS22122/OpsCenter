@@ -66,7 +66,7 @@ export function IncidentFeed({
                                     <span className="text-slate-500">Total Occurrences:</span>
                                     <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{appIncidents.reduce((acc, curr) => acc + curr.occurrenceCount, 0).toLocaleString()}</span>
                                 </div>
-                                <span className="text-xs text-slate-400 font-mono pl-2 border-l border-slate-200 dark:border-slate-800">eu-west-1</span>
+                                <span className="text-xs text-slate-400 font-mono pl-2 border-l border-slate-200 dark:border-slate-800">{(appIncidents[0]?.env || 'unknown').toUpperCase()}</span>
                             </div>
                         </div>
                         <div className="divide-y divide-slate-100 dark:divide-slate-800">

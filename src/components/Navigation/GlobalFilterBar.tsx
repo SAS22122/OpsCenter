@@ -17,7 +17,7 @@ import {
 
 export function GlobalFilterBar() {
     const {
-        clearAll, syncWithSql,
+        groups, clearAll, syncWithSql,
         selectedService, setSelectedService,
     } = useIncidents()
     const { user, logout } = useAuth();
@@ -36,8 +36,9 @@ export function GlobalFilterBar() {
                     </SelectTrigger>
                     <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200">
                         <SelectItem value="all">Tous les Services</SelectItem>
-                        <SelectItem value="Brains">Brains</SelectItem>
-                        <SelectItem value="Discovery">Discovery</SelectItem>
+                        {Array.from(new Set(groups.map(g => g.appId))).filter(Boolean).map(app => (
+                            <SelectItem key={app} value={app}>{app}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
 

@@ -17,8 +17,19 @@ export default function Analytics() {
         setChartData(getAnalyticsData())
     }, [getAnalyticsData])
 
-    // Calculate real-time stats
-    const mttr = 4.2
+    // Calculate real-time stats (MTTR)
+    let totalFixTime = 0;
+    let fixedCount = 0;
+    groups.forEach(g => {
+        if (g.fixedAt && g.firstSeen) {
+            const timeDiff = new Date(g.fixedAt).getTime() - new Date(g.firstSeen).getTime();
+            if (timeDiff > 0) {
+                totalFixTime += timeDiff;
+                fixedCount++;
+            }
+        }
+    });
+    const mttr = fixedCount > 0 ? Number(((totalFixTime / fixedCount) / (1000 * 60 * 60)).toFixed(1)) : 0;
 
     const totalDeploys = chartData.reduce((acc, curr) => acc + curr.deployments, 0)
 

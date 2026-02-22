@@ -12,10 +12,16 @@ export interface CockpitStatsProps {
 
 export function CockpitStats({ activeCount, criticalCount, view, selectedEnv, onSelectEnv, envStats }: CockpitStatsProps) {
     const envs = [
-        { id: 'prod', label: 'Production', status: 'Opérationnel', color: 'emerald', icon: Activity },
-        { id: 'stage', label: 'Pré-prod', status: 'Stable', color: 'blue', icon: Activity },
-        { id: 'dev', label: 'Recette', status: 'Dégradé', color: 'amber', icon: AlertCircle } // Simulated status
-    ];
+        { id: 'prod', label: 'Production', color: 'emerald', icon: Activity },
+        { id: 'stage', label: 'Pré-prod', color: 'blue', icon: Activity },
+        { id: 'dev', label: 'Recette', color: 'amber', icon: AlertCircle }
+    ].map(env => {
+        const stats = envStats[env.id] || { active: 0, critical: 0 };
+        let status = 'Opérationnel';
+        if (stats.critical > 0) status = 'Dégradé';
+        else if (stats.active > 0) status = 'Instable';
+        return { ...env, status };
+    });
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
