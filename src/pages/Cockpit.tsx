@@ -111,7 +111,7 @@ export default function Cockpit() {
 
 
             {/* Content Layout: Feed + Sidebar */}
-            <div className="flex items-start gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_18rem] gap-6 relative items-stretch">
 
                 {/* Main Content: Hierarchical Incident Feed */}
                 <div className="flex-1 space-y-6 min-w-0">
@@ -130,13 +130,27 @@ export default function Cockpit() {
                     />
                 </div>
 
-                {/* Right Column: Intervention Timeline */}
-                <div className="hidden lg:block w-72 shrink-0">
-                    <div className="sticky top-6">
-                        <div className="flex items-center gap-2 mb-6 px-2">
-                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Intervention Timeline</h3>
+                {/* Right Column: Intervention Timeline Track */}
+                <div className="hidden lg:block relative w-full h-full">
+                    {/* The Sticky Element */}
+                    <div
+                        className="sticky top-6 bg-slate-50 dark:bg-black/20 rounded-md border border-slate-200 dark:border-slate-800/50 shadow-sm p-4 overflow-y-auto hidden-scrollbar"
+                        style={{ maxHeight: 'calc(100vh - 3rem)' }}
+                    >
+                        <div className="mb-6">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></div>
+                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Intervention Timeline</h3>
+                                </div>
+                            </div>
+                            {selectedGroup && (
+                                <div className="mt-4 pb-2 text-sm font-semibold text-slate-800 dark:text-slate-200 leading-snug border-b border-slate-200 dark:border-slate-800/50">
+                                    {selectedGroup.title || selectedGroup.description || "Titre de l'incident indisponible (vérifier les données entrantes)"}
+                                </div>
+                            )}
                         </div>
+                        {/* Timeline Events */}
                         <InterventionTimeline group={selectedGroup} />
                     </div>
                 </div>
