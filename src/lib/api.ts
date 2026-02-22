@@ -5,14 +5,71 @@ const API_URL = import.meta.env.VITE_API_URL || '';
 const API_KEY = import.meta.env.VITE_API_KEY || ''; // Read API Key
 
 export class ApiClient {
+    private static jwtToken: string | null = null;
+
+    static setToken(token: string | null) {
+        this.jwtToken = token;
+    }
+
+    private static getHeaders(): HeadersInit {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY, // Keeping the old key for ingest compatibility if needed
+        };
+        if (this.jwtToken) {
+            headers['Authorization'] = `Bearer ${this.jwtToken}`;
+        }
+        return headers;
+    }
+
+    // --- Authentication ---
+    static async login(credentials: any): Promise<{ access_token: string, user: any }> {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify(credentials),
+        });
+        if (!response.ok) throw new Error("Invalid credentials");
+        return response.json();
+    }
+
+    static async register(userData: any): Promise<any> {
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify(userData),
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.message || "Registration failed");
+        }
+        return response.json();
+    }
+
+    static async getMe(): Promise<any> {
+        const response = await fetch(`${API_URL}/users/me`, {
+            headers: this.getHeaders(),
+        });
+        if (!response.ok) throw new Error("Failed to fetch user profile");
+        return response.json();
+    }
+
+    static async updatePreferences(preferences: any): Promise<any> {
+        const response = await fetch(`${API_URL}/users/me/preferences`, {
+            method: 'PATCH',
+            headers: this.getHeaders(),
+            body: JSON.stringify(preferences),
+        });
+        if (!response.ok) throw new Error("Failed to update preferences");
+        return response.json();
+    }
+
+    // --- Incidents ---
     static async ingestLog(payload: IngestPayload): Promise<{ status: string, incidentId: string, isNew: boolean }> {
         try {
             const response = await fetch(`${API_URL}/ingest`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': API_KEY, // Auth Header
-                },
+                headers: this.getHeaders(),
                 body: JSON.stringify(payload),
             });
 
@@ -29,13 +86,14 @@ export class ApiClient {
 
     static async getIncidents(): Promise<BackendIncident[]> {
         try {
-            // Updated endpoint: /incidents (GET)
-            const response = await fetch(`${API_URL}/incidents`);
+            const response = await fetch(`${API_URL}/incidents`, {
+                headers: this.getHeaders()
+            });
             if (!response.ok) throw new Error("Failed to fetch incidents");
             return await response.json();
         } catch (error) {
             console.error("Fetch incidents failed:", error);
-            throw error; // Propagate error to caller (IncidentContext)
+            throw error;
         }
     }
 
@@ -43,9 +101,7 @@ export class ApiClient {
         try {
             const response = await fetch(`${API_URL}/ingest`, {
                 method: 'DELETE',
-                headers: {
-                    'x-api-key': API_KEY, // Auth Header
-                },
+                headers: this.getHeaders(),
             });
             if (!response.ok) throw new Error("Failed to clear incidents");
         } catch (error) {
