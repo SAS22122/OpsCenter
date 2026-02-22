@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Trash2, Plus, Database } from 'lucide-react';
 import { toast } from 'sonner';
+import { ApiClient } from '@/lib/api';
 
 interface SqlSource {
     id: string;
@@ -38,12 +39,8 @@ export function SettingsPage() {
 
     const fetchSources = async () => {
         try {
-            const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
-            const res = await fetch(`${proxyUrl}/config/sources`);
-            if (res.ok) {
-                const data = await res.json();
-                setSources(data);
-            }
+            const data = await ApiClient.getConfigSources();
+            setSources(data as unknown as SqlSource[]);
         } catch (e) {
             console.error("Failed to load sources", e);
             toast.error("Erreur", { description: "Impossible de charger la config (Serveur local éteint ?)" });
@@ -55,8 +52,7 @@ export function SettingsPage() {
     const handleDelete = async (id: string) => {
         if (!confirm("Supprimer cette connexion ?")) return;
         try {
-            const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
-            await fetch(`${proxyUrl}/config/sources/${id}`, { method: 'DELETE' });
+            await ApiClient.deleteConfigSource(id);
             toast.success("Supprimé");
             fetchSources();
         } catch (e) {
@@ -68,23 +64,14 @@ export function SettingsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
-            const res = await fetch(`${proxyUrl}/config/sources`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-            if (res.ok) {
-                toast.success("Source Ajoutée");
-                setIsAdding(false);
-                setFormData({ name: '', env: 'prod', host: '', database: '', table: '' });
-                fetchSources();
-            } else {
-                toast.error("Erreur", { description: "Le serveur a refusé la config" });
-            }
+            await ApiClient.addConfigSource(formData);
+            toast.success("Source Ajoutée");
+            setIsAdding(false);
+            setFormData({ name: '', env: 'prod', host: '', database: '', table: '' });
+            fetchSources();
         } catch (e) {
             console.error(e);
-            toast.error("Erreur Connexion");
+            toast.error("Erreur Connexion", { description: "Le serveur a refusé la config" });
         }
     };
 

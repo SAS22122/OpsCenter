@@ -183,10 +183,9 @@ export const IncidentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const syncWithSql = useCallback(async () => {
         try {
             toast.loading("Synchronisation SQL...", { id: 'sql-sync' });
-            // 1. Trigger Proxy (which pushes to Backend)
-            const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
-            const res = await fetch(`${proxyUrl}/manual-sync`);
-            const newLogs = await res.json();
+            // 1. Trigger Backend
+            const { ApiClient } = await import('../lib/api');
+            const newLogs = await ApiClient.manualSync();
 
             // 2. Fetch updated state from Backend (NestJS)
             await refreshIncidents();
@@ -212,12 +211,11 @@ export const IncidentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             const { ApiClient } = await import('../lib/api');
             await ApiClient.clearIncidents();
 
-            // 2. Reset Proxy Counters (SQL LastCheck)
+            // 2. Reset Counters (SQL LastCheck)
             try {
-                const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
-                await fetch(`${proxyUrl}/reset`, { method: 'POST' });
+                await ApiClient.resetConfig();
             } catch (proxyError) {
-                console.error("Proxy Reset Failed", proxyError);
+                console.error("Reset Failed", proxyError);
                 // Non-blocking warning
                 toast.warning("Attention", { description: "DB vidée, mais échec du reset Proxy." });
             }

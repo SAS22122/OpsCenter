@@ -109,4 +109,47 @@ export class ApiClient {
             throw error;
         }
     }
+
+    // --- Configuration (Sources) ---
+    static async getConfigSources(): Promise<Record<string, unknown>[]> {
+        const response = await fetch(`${API_URL}/config/sources`, {
+            headers: this.getHeaders(),
+        });
+        if (!response.ok) throw new Error("Failed to fetch sources");
+        return response.json();
+    }
+
+    static async addConfigSource(source: Record<string, unknown>): Promise<Record<string, unknown>> {
+        const response = await fetch(`${API_URL}/config/sources`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify(source),
+        });
+        if (!response.ok) throw new Error("Failed to add source");
+        return response.json();
+    }
+
+    static async deleteConfigSource(id: string): Promise<void> {
+        const response = await fetch(`${API_URL}/config/sources/${id}`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+        });
+        if (!response.ok) throw new Error("Failed to delete source");
+    }
+
+    static async manualSync(): Promise<Record<string, unknown>[]> {
+        const response = await fetch(`${API_URL}/config/manual-sync`, {
+            headers: this.getHeaders(),
+        });
+        if (!response.ok) throw new Error("Failed to manual sync");
+        return response.json();
+    }
+
+    static async resetConfig(): Promise<void> {
+        const response = await fetch(`${API_URL}/config/reset`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+        });
+        if (!response.ok) throw new Error("Failed to reset config");
+    }
 }

@@ -6,6 +6,7 @@ import { Incident } from './entities/incident.entity';
 import { User } from './entities/user.entity';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { SourcesConfigModule } from './config/config.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AuthModule } from './auth/auth.module';
     IngestModule,
     UsersModule,
     AuthModule,
+    SourcesConfigModule,
   ],
 })
 export class AppModule { }
