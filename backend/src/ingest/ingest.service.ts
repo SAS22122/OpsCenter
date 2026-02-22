@@ -135,6 +135,121 @@ export class IngestService {
         return { status: 'ACCEPTED', incidentId: saved.id, isNew: true };
     }
 
+    async processBulkLogs(payloads: IngestPayload[]): Promise<number> {
+        if (!payloads.length) return 0;
+
+        let processedCount = 0;
+
+        // 1. Group payloads by signature in memory to prevent race conditions and DB spam
+        const grouped = new Map<string, { signature: string, payloads: IngestPayload[] }>();
+
+        for (const payload of payloads) {
+            const normalizedMessage = this.normalizeMessage(payload.message);
+            const signature = this.computeHash(payload.serviceName, normalizedMessage);
+
+            if (!grouped.has(signature)) {
+                grouped.set(signature, { signature, payloads: [] });
+            }
+            grouped.get(signature)!.payloads.push(payload);
+        }
+
+        // 2. Process each unique signature sequentially to avoid deadlocks
+        for (const [signature, group] of grouped.entries()) {
+            const latestPayload = group.payloads[group.payloads.length - 1]; // Sort of arbitrary, but gets context
+            const normalizedMessage = this.normalizeMessage(latestPayload.message);
+
+            // Find most recent occurrence of this log
+            const occurrenceDates = group.payloads.map(p => p.timestamp ? new Date(p.timestamp) : new Date());
+            const firstSeenInBatch = new Date(Math.min(...occurrenceDates.map(d => d.getTime())));
+            const lastSeenInBatch = new Date(Math.max(...occurrenceDates.map(d => d.getTime())));
+            const occurrencesInBatch = group.payloads.length;
+
+            const existing = await this.incidentRepo.findOne({
+                where: { errorHash: signature },
+                order: { version: 'DESC' }
+            });
+
+            if (existing) {
+                // REGRESSION CHECK
+                const isResolved = [IncidentStatus.FIXED, 'DEPLOYED', 'VERIFIED_FIXED', IncidentStatus.IGNORED].includes(existing.status);
+
+                if (isResolved && existing.status !== IncidentStatus.IGNORED) {
+                    // Create NEW version (Regression)
+                    const newIncident = this.incidentRepo.create({
+                        errorHash: signature,
+                        message: latestPayload.message,
+                        stackTrace: latestPayload.stackTrace,
+                        serviceName: latestPayload.serviceName,
+                        environment: latestPayload.environment,
+                        status: IncidentStatus.REGRESSION,
+                        version: (existing.version || 1) + 1,
+                        regressionOf: existing.id,
+                        occurrenceCount: occurrencesInBatch,
+                        firstSeen: firstSeenInBatch,
+                        lastSeen: lastSeenInBatch,
+                        metadata: { ...latestPayload.metadata, normalizedSignature: normalizedMessage, triggeredBy: 'batch-regression' },
+                        runbookUrl: this.getRunbookUrl(latestPayload.message),
+                    });
+
+                    const saved = await this.incidentRepo.save(newIncident);
+
+                    // Fire AI once per NEW regression
+                    this.aiService.generateAnalysis(saved.message, saved.stackTrace)
+                        .then(async (analysis) => {
+                            if (analysis) {
+                                saved.aiSummary = analysis.summary;
+                                saved.aiSuggestedFix = analysis.fix;
+                                await this.incidentRepo.save(saved);
+                            }
+                        }).catch(() => { });
+                } else if (!isResolved) {
+                    // UPDATE ACTIVE INCIDENT
+                    existing.occurrenceCount += occurrencesInBatch;
+                    if (lastSeenInBatch > existing.lastSeen) {
+                        existing.lastSeen = lastSeenInBatch;
+                    }
+                    if (firstSeenInBatch < existing.firstSeen) {
+                        existing.firstSeen = firstSeenInBatch;
+                    }
+                    await this.incidentRepo.save(existing);
+                }
+            } else {
+                // CREATE BRAND NEW INCIDENT
+                const newIncident = this.incidentRepo.create({
+                    errorHash: signature,
+                    message: latestPayload.message,
+                    stackTrace: latestPayload.stackTrace,
+                    serviceName: latestPayload.serviceName,
+                    environment: latestPayload.environment,
+                    status: IncidentStatus.OPEN,
+                    version: 1,
+                    occurrenceCount: occurrencesInBatch,
+                    firstSeen: firstSeenInBatch,
+                    lastSeen: lastSeenInBatch,
+                    metadata: { ...latestPayload.metadata, normalizedSignature: normalizedMessage },
+                    runbookUrl: this.getRunbookUrl(latestPayload.message),
+                });
+
+                const saved = await this.incidentRepo.save(newIncident);
+
+                // Fire AI once per NEW incident class
+                this.aiService.generateAnalysis(saved.message, saved.stackTrace)
+                    .then(async (analysis) => {
+                        if (analysis) {
+                            saved.aiSummary = analysis.summary;
+                            saved.aiSuggestedFix = analysis.fix;
+                            saved.aiLocation = analysis.location;
+                            await this.incidentRepo.save(saved);
+                        }
+                    }).catch(() => { });
+            }
+
+            processedCount += occurrencesInBatch;
+        }
+
+        return processedCount;
+    }
+
     private getRunbookUrl(message: string): string | undefined {
         // Simple heuristic mapping
         if (/timeout|connection/i.test(message)) return "https://wiki.company.com/runbooks/network-timeout";
@@ -153,8 +268,7 @@ export class IngestService {
 
     async findAll(): Promise<Incident[]> {
         return this.incidentRepo.find({
-            order: { lastSeen: 'DESC' },
-            take: 100 // Limit to last 100 for now
+            order: { lastSeen: 'DESC' }
         });
     }
 
@@ -178,9 +292,19 @@ export class IngestService {
             // Dates (Simple ISO-like or common formats)
             .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?/g, '<DATE>')
             .replace(/\d{4}-\d{2}-\d{2}/g, '<DATE>')
-            // Generic Numbers (only if isolated, to avoid breaking variable names like user1)
-            // .replace(/\b\d+\b/g, '<NUM>') 
             // Hex Addresses (0x123...)
-            .replace(/0x[0-9a-fA-F]+/g, '<HEX>');
+            .replace(/0x[0-9a-fA-F]+/g, '<HEX>')
+            // Position indicators in parsers (e.g., "Line 1, position 27766")
+            .replace(/Line \d+, position \d+/gi, 'Line <L>, position <P>')
+            // Stack trace line numbers (e.g. "line 4340" or ":line 42")
+            .replace(/line \d+/gi, 'line <L>')
+            // SQL Deadlock Process IDs (e.g., "Process ID 56")
+            .replace(/\(Process ID \d+\)/gi, '(Process ID <PID>)')
+            // Full system file paths (e.g. "D:\a\1\s\GeneDoc\Models\GenerateDocument.cs"), just keep the file name
+            .replace(/[a-zA-Z]:\\[\\\w.\-]+\\([\w.\-]+)/g, '$1') // Windows paths
+            .replace(/(?:\/[^\/]+)+\/([\w.\-]+)/g, '$1') // Unix paths
+            // Remove random quotes that might have distinct variable names 
+            .replace(/'[^']*'/g, "'<VAR>'")
+            .replace(/"[^"]*"/g, '"<VAR>"');
     }
 }
