@@ -1,12 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ApiClient } from '@/lib/api';
 
-interface User {
+export interface User {
     id: string;
     email: string;
     name: string;
     role: string;
-    preferences: any;
+    preferences: Record<string, unknown>;
 }
 
 interface AuthContextType {
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ApiClient.setToken(token);
         try {
             const userData = await ApiClient.getMe();
-            setUser(userData);
+            setUser(userData as User);
         } catch (error) {
             console.error("Failed to refresh user:", error);
             logout();
@@ -69,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Initial load
     useEffect(() => {
         refreshUser();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
@@ -88,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
     const context = useContext(AuthContext);
     if (context === undefined) {

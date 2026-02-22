@@ -30,7 +30,8 @@ export default function Profile() {
             });
             await refreshUser();
             toast.success("Préférences enregistrées avec succès");
-        } catch (error: any) {
+        } catch (err: unknown) {
+            const error = err as Error;
             toast.error("Erreur lors de l'enregistrement", { description: error.message });
         } finally {
             setLoading(false);
@@ -102,7 +103,7 @@ export default function Profile() {
                                 <Palette className="h-4 w-4 text-slate-500" />
                                 Thème Visuel
                             </label>
-                            <Select value={theme} onValueChange={(v: any) => setTheme(v)}>
+                            <Select value={theme} onValueChange={(v) => setTheme(v as 'light' | 'dark' | 'system')}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Sélectionnez un thème" />
                                 </SelectTrigger>
@@ -119,7 +120,7 @@ export default function Profile() {
                                 <Settings className="h-4 w-4 text-slate-500" />
                                 Environnement par défaut
                             </label>
-                            <Select value={env} onValueChange={setEnv}>
+                            <Select value={env} onValueChange={(v) => setEnv(v as string)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Sélectionnez un environnement" />
                                 </SelectTrigger>

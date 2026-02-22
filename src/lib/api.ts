@@ -23,7 +23,7 @@ export class ApiClient {
     }
 
     // --- Authentication ---
-    static async login(credentials: any): Promise<{ access_token: string, user: any }> {
+    static async login(credentials: Record<string, unknown>): Promise<{ access_token: string, user: Record<string, unknown> }> {
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: this.getHeaders(),
@@ -33,7 +33,7 @@ export class ApiClient {
         return response.json();
     }
 
-    static async register(userData: any): Promise<any> {
+    static async register(userData: Record<string, unknown>): Promise<Record<string, unknown>> {
         const response = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: this.getHeaders(),
@@ -46,7 +46,7 @@ export class ApiClient {
         return response.json();
     }
 
-    static async getMe(): Promise<any> {
+    static async getMe(): Promise<Record<string, unknown>> {
         const response = await fetch(`${API_URL}/users/me`, {
             headers: this.getHeaders(),
         });
@@ -54,7 +54,7 @@ export class ApiClient {
         return response.json();
     }
 
-    static async updatePreferences(preferences: any): Promise<any> {
+    static async updatePreferences(preferences: Record<string, unknown>): Promise<Record<string, unknown>> {
         const response = await fetch(`${API_URL}/users/me/preferences`, {
             method: 'PATCH',
             headers: this.getHeaders(),
