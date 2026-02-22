@@ -184,7 +184,8 @@ export const IncidentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         try {
             toast.loading("Synchronisation SQL...", { id: 'sql-sync' });
             // 1. Trigger Proxy (which pushes to Backend)
-            const res = await fetch('http://localhost:3001/manual-sync');
+            const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
+            const res = await fetch(`${proxyUrl}/manual-sync`);
             const newLogs = await res.json();
 
             // 2. Fetch updated state from Backend (NestJS)
@@ -213,7 +214,8 @@ export const IncidentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
             // 2. Reset Proxy Counters (SQL LastCheck)
             try {
-                await fetch('http://localhost:3001/reset', { method: 'POST' });
+                const proxyUrl = import.meta.env.VITE_PROXY_URL || 'http://localhost:3001';
+                await fetch(`${proxyUrl}/reset`, { method: 'POST' });
             } catch (proxyError) {
                 console.error("Proxy Reset Failed", proxyError);
                 // Non-blocking warning
