@@ -5,11 +5,13 @@ import { IngestService } from './ingest.service';
 import { Incident } from '../entities/incident.entity';
 
 import { AiModule } from '../ai/ai.module';
+import { SourceCodeModule } from '../source-code/source-code.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Incident]),
-        AiModule
+        AiModule,
+        SourceCodeModule
     ],
     controllers: [IngestController],
     providers: [IngestService],

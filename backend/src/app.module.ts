@@ -7,6 +7,7 @@ import { User } from './entities/user.entity';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SourcesConfigModule } from './config/config.module';
+import { SourceCodeModule } from './source-code/source-code.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { SourcesConfigModule } from './config/config.module';
     UsersModule,
     AuthModule,
     SourcesConfigModule,
+    SourceCodeModule,
   ],
 })
 export class AppModule { }

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Incident, IncidentStatus } from '../entities/incident.entity';
 import * as crypto from 'crypto';
 import { AiService } from '../ai/ai.service';
+import { SourceCodeService } from '../source-code/source-code.service';
 
 export interface IngestPayload {
     message: string;
@@ -26,6 +27,7 @@ export class IngestService {
         @InjectRepository(Incident)
         private incidentRepo: Repository<Incident>,
         private aiService: AiService,
+        private sourceCodeService: SourceCodeService,
     ) { }
 
     async processLog(payload: IngestPayload): Promise<IngestResult> {
@@ -78,7 +80,8 @@ export class IngestService {
                 const saved = await this.incidentRepo.save(newIncident);
 
                 // TRIGGER AI ANALYSIS (Async) for Regression
-                this.aiService.generateAnalysis(saved.message, saved.stackTrace)
+                this.sourceCodeService.getSurroundingCodeFromStackTrace(saved.stackTrace, saved.serviceName)
+                    .then(sourceContext => this.aiService.generateAnalysis(saved.message, saved.stackTrace || '', sourceContext))
                     .then(async (analysis) => {
                         if (analysis) {
                             saved.aiSummary = analysis.summary;
@@ -121,7 +124,8 @@ export class IngestService {
         const saved = await this.incidentRepo.save(newIncident);
 
         // TRIGGER AI ANALYSIS (Async)
-        this.aiService.generateAnalysis(saved.message, saved.stackTrace)
+        this.sourceCodeService.getSurroundingCodeFromStackTrace(saved.stackTrace, saved.serviceName)
+            .then(sourceContext => this.aiService.generateAnalysis(saved.message, saved.stackTrace || '', sourceContext))
             .then(async (analysis) => {
                 if (analysis) {
                     saved.aiSummary = analysis.summary;
@@ -194,7 +198,8 @@ export class IngestService {
                     const saved = await this.incidentRepo.save(newIncident);
 
                     // Fire AI once per NEW regression
-                    this.aiService.generateAnalysis(saved.message, saved.stackTrace)
+                    this.sourceCodeService.getSurroundingCodeFromStackTrace(saved.stackTrace, saved.serviceName)
+                        .then(sourceContext => this.aiService.generateAnalysis(saved.message, saved.stackTrace || '', sourceContext))
                         .then(async (analysis) => {
                             if (analysis) {
                                 saved.aiSummary = analysis.summary;
@@ -233,7 +238,8 @@ export class IngestService {
                 const saved = await this.incidentRepo.save(newIncident);
 
                 // Fire AI once per NEW incident class
-                this.aiService.generateAnalysis(saved.message, saved.stackTrace)
+                this.sourceCodeService.getSurroundingCodeFromStackTrace(saved.stackTrace, saved.serviceName)
+                    .then(sourceContext => this.aiService.generateAnalysis(saved.message, saved.stackTrace || '', sourceContext))
                     .then(async (analysis) => {
                         if (analysis) {
                             saved.aiSummary = analysis.summary;
