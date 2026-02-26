@@ -1,4 +1,13 @@
-# React + TypeScript + Vite
+# OpsCenter - Incident Tracking Tool
+
+> 📚 **Documentation Développeur (Handover)**
+> Si vous reprenez ce projet, merci de lire ces documents dans l'ordre pour comprendre comment tout fonctionne :
+> 1. [Documentation Fonctionnelle](docs/1_DOC_FONCTIONNELLE.md) : *Ce que fait l'application et pour qui.*
+> 2. [Documentation Technique](docs/2_DOC_TECHNIQUE.md) : *La stack, l'installation locale, l'arborescence.*
+> 3. [Documentation Technico-Fonctionnelle](docs/3_DOC_TECHNICO_FONCTIONNELLE.md) : *Comment les règles métiers sont codées.*
+> 4. [Architecture Système](docs/4_ARCHITECTURE.md) : *Schémas des interactions (Front, Back, IA, Azure DevOps).*
+
+---
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

@@ -23,7 +23,7 @@ export class AiService {
         }
     }
 
-    async generateAnalysis(message: string, stackTrace: string): Promise<AiAnalysisResult | null> {
+    async generateAnalysis(message: string, stackTrace: string, sourceCodeContext?: string | null): Promise<AiAnalysisResult | null> {
         // MOCK MODE
         if (!this.openai) {
             this.logger.log(`[MOCK] Generating analysis for: ${message.substring(0, 50)}...`);
@@ -42,10 +42,11 @@ export class AiService {
             
             Error Message: "${message}"
             Stack Trace: "${stackTrace || 'No stack trace provided'}"
+            ${sourceCodeContext ? `\nHere is the actual source code surrounding the error line:\n"""\n${sourceCodeContext}\n"""\n` : ''}
             
             Provide a JSON response with THREE fields:
             1. "summary": A concise explanation of the root cause IN FRENCH (max 2 sentences).
-            2. "fix": A specific technical code suggestion or command to fix it (max 2 sentences).
+            2. "fix": A specific technical suggestion to fix it. If applicable, provide the exact code snippet or command needed. Be detailed but concise.
             3. "location": The most likely file path and line number causing the issue (e.g. "src/main.ts:15"), inferred from stack trace.
             
             Do not include any other text, just the JSON.
